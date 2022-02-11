@@ -36,6 +36,7 @@
             this.label3 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.pnl_questoes = new System.Windows.Forms.Panel();
+            this.lbl_num_pergunta = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
             this.lbl_warning = new System.Windows.Forms.Label();
             this.flp_respostas = new System.Windows.Forms.FlowLayoutPanel();
@@ -51,7 +52,6 @@
             this.lbl_r = new System.Windows.Forms.Label();
             this.lbl_d = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
-            this.lbl_num_pergunta = new System.Windows.Forms.Label();
             this.pnl_inicial.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_perguntas)).BeginInit();
             this.pnl_questoes.SuspendLayout();
@@ -137,11 +137,22 @@
             this.pnl_questoes.Controls.Add(this.btn_prev);
             this.pnl_questoes.Controls.Add(this.btn_next);
             this.pnl_questoes.Controls.Add(this.lbl_pergunta);
-            this.pnl_questoes.Location = new System.Drawing.Point(410, 12);
+            this.pnl_questoes.Location = new System.Drawing.Point(12, 12);
             this.pnl_questoes.Name = "pnl_questoes";
             this.pnl_questoes.Size = new System.Drawing.Size(392, 571);
             this.pnl_questoes.TabIndex = 1;
             this.pnl_questoes.Visible = false;
+            // 
+            // lbl_num_pergunta
+            // 
+            this.lbl_num_pergunta.AutoSize = true;
+            this.lbl_num_pergunta.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_num_pergunta.ForeColor = System.Drawing.Color.LightSeaGreen;
+            this.lbl_num_pergunta.Location = new System.Drawing.Point(32, 29);
+            this.lbl_num_pergunta.Name = "lbl_num_pergunta";
+            this.lbl_num_pergunta.Size = new System.Drawing.Size(56, 32);
+            this.lbl_num_pergunta.TabIndex = 10;
+            this.lbl_num_pergunta.Text = "100";
             // 
             // button1
             // 
@@ -223,7 +234,7 @@
             this.pnl_resultados.Controls.Add(this.btn_reiniciar);
             this.pnl_resultados.Controls.Add(this.flp_resultados);
             this.pnl_resultados.Controls.Add(this.label2);
-            this.pnl_resultados.Location = new System.Drawing.Point(808, 12);
+            this.pnl_resultados.Location = new System.Drawing.Point(12, 12);
             this.pnl_resultados.Name = "pnl_resultados";
             this.pnl_resultados.Size = new System.Drawing.Size(392, 571);
             this.pnl_resultados.TabIndex = 2;
@@ -299,23 +310,12 @@
             this.label2.Text = "Resultados:";
             this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // lbl_num_pergunta
-            // 
-            this.lbl_num_pergunta.AutoSize = true;
-            this.lbl_num_pergunta.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_num_pergunta.ForeColor = System.Drawing.Color.LightSeaGreen;
-            this.lbl_num_pergunta.Location = new System.Drawing.Point(32, 29);
-            this.lbl_num_pergunta.Name = "lbl_num_pergunta";
-            this.lbl_num_pergunta.Size = new System.Drawing.Size(56, 32);
-            this.lbl_num_pergunta.TabIndex = 10;
-            this.lbl_num_pergunta.Text = "100";
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.ClientSize = new System.Drawing.Size(1212, 597);
+            this.ClientSize = new System.Drawing.Size(417, 597);
             this.Controls.Add(this.pnl_inicial);
             this.Controls.Add(this.pnl_questoes);
             this.Controls.Add(this.pnl_resultados);
