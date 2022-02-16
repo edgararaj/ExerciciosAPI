@@ -27,6 +27,11 @@ namespace CalculoPrestacoes
             this.em_ordem = em_ordem;
         }
 
+        public static int Clamp(int value, int min, int max)
+        {
+            return (value < min) ? min : (value > max) ? max : value;
+        }
+
         private bool IsSafe(double y)
         {
             return !double.IsNaN(y) && !double.IsInfinity(y) && y >= -1e5 && y <= 1e5;
@@ -111,10 +116,10 @@ namespace CalculoPrestacoes
 
         private int function_min = -1000;
         private int function_max = 1000;
-        private int function_precision = 50;
+        private int function_precision = 20;
         public double[] function_cache;
 
-        public void DesenharGrafico(PictureBox pictureBox1, PointF scale, Point center, Variavel x_target, Variavel y_target, int div)
+        public void DesenharGrafico(PictureBox pictureBox1, PointF scale, Point center, Variavel x_target, Variavel y_target, double div)
         {
             Func<double, double> funcao = (x) =>
             {
@@ -161,41 +166,58 @@ namespace CalculoPrestacoes
             var sub_ref_brush = new SolidBrush(Color.Gray);
             var imagem = new Bitmap(canvas_width, canvas_height);
             var canvas = Graphics.FromImage(imagem);
+            canvas.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
             var antialias_canvas = Graphics.FromImage(imagem);
             antialias_canvas.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            var text_canvas = Graphics.FromImage(imagem);
-            text_canvas.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
             var thickness = 2;
+            var margin = 2;
 
             // Desenhar divs
             if (div > 0)
             {
-                var scale_y_font_size = Math.Min(2 / scale.Y, 12);
-                for (int i = 1; i < (canvas_height - center.Y) * scale.Y / div; i++)
+                var y_font_size = Clamp((int)((2 / scale.Y) * div / 5), 5, 12);
+                var y_font = new Font("Arial", y_font_size);
+                var y_bot_div_count = (int)((canvas_height - center.Y) * scale.Y / div);
+                for (int i = 1; i <= y_bot_div_count; i++)
                 {
-                    var y = div / scale.Y * i;
+                    var text = $"{-i * div}";
+                    var y_bot_font_rect = canvas.MeasureString(text, y_font);
+                    var y = (int)(div / scale.Y * i);
                     canvas.FillRectangle(sub_ref_brush, 0, y + center.Y, canvas_width, 1);
-                    text_canvas.DrawString($"{i * div}", new Font("Arial", scale_y_font_size), ref_brush, center.X, y + center.Y);
+                    if (y_font_size > 5)
+                        canvas.DrawString(text, y_font, ref_brush, Clamp(center.X, 0, canvas_width - (int)y_bot_font_rect.Width), y + center.Y);
                 }
-                for (int i = 1; i < center.Y * scale.Y / div; i++)
+                var y_top_div_count = (int)(center.Y * scale.Y / div);
+                for (int i = 1; i <= y_top_div_count; i++)
                 {
-                    var y = div / scale.Y * i;
+                    var text = $"{i * div}";
+                    var y_top_font_rect = canvas.MeasureString(text, y_font);
+                    var y = (int)(div / scale.Y * i);
                     canvas.FillRectangle(sub_ref_brush, 0, center.Y - y, canvas_width, 1);
-                    text_canvas.DrawString($"{i * div}", new Font("Arial", scale_y_font_size), ref_brush, center.X, center.Y - y);
+                    if (y_font_size > 5)
+                        canvas.DrawString(text, y_font, ref_brush, Clamp(center.X, 0, canvas_width - (int)y_top_font_rect.Width), center.Y - y - y_top_font_rect.Height);
                 }
 
-                var scale_x_font_size = Math.Min(2 / scale.X, 12);
-                for (int i = 0; i < (canvas_width - center.X) * scale.X / div; i++)
+                var x_font_size = Clamp((int)((2 / scale.X) * div / 5), 5, 12);
+                var x_font = new Font("Arial", x_font_size);
+                var x_right_div_count = (int)((canvas_width - center.X) * scale.X / div);
+                var x_right_font_rect = canvas.MeasureString($"{x_right_div_count * div}", x_font);
+                for (int i = 0; i <= x_right_div_count; i++)
                 {
-                    var x = div / scale.X * i;
+                    var x = (int)(div / scale.X * i);
                     canvas.FillRectangle(sub_ref_brush, x + center.X, 0, 1, canvas_height);
-                    text_canvas.DrawString($"{i * div}", new Font("Arial", scale_x_font_size), ref_brush, x + center.X, center.Y);
+                    if (x_font_size > 5)
+                        canvas.DrawString($"{i * div}", x_font, ref_brush, x + center.X, Clamp(center.Y + margin, 0, canvas_height - (int)x_right_font_rect.Height));
                 }
-                for (int i = 1; i < center.X * scale.X / div; i++)
+                var x_left_div_count = (int)(center.X * scale.X / div);
+                for (int i = 1; i <= x_left_div_count; i++)
                 {
-                    var x = div / scale.X * i;
+                    var text = $"{-i * div}";
+                    var x_left_font_rect = canvas.MeasureString(text, x_font);
+                    var x = (int)(div / scale.X * i);
                     canvas.FillRectangle(sub_ref_brush, center.X - x, 0, 1, canvas_height);
-                    text_canvas.DrawString($"{i * div}", new Font("Arial", scale_x_font_size), ref_brush, center.X - x, center.Y);
+                    if (x_font_size > 5)
+                        canvas.DrawString(text, x_font, ref_brush, center.X - x - x_left_font_rect.Width, Clamp(center.Y + margin, 0, canvas_height - (int)x_left_font_rect.Height));
                 }
             }
 
@@ -220,14 +242,15 @@ namespace CalculoPrestacoes
             var endI = Math.Min((int)((-function_min + ((canvas_width - center.X) * scale.X)) * function_precision), function_cache_size - 1);
             bool? searching_below = null;
             int? x_eq = null;
-            for (int i = startI; i < endI; i++)
+            var jump = 1; // Math.Max((int)(function_precision * scale.X * scale.X), 1);
+            for (int i = startI; i < endI; i+=jump)
             {
                 var y = function_cache[i];
-                var y2 = function_cache[i+1];
+                var y2 = function_cache[i+jump];
                 if (IsSafe(y) && IsSafe(y2)) 
                 {
-                    var x_a_desenhar = (int)((i - startI) * canvas_width / (endI - startI));
-                    var x2_a_desenhar = (int)((i + 1 - startI) * canvas_width / (endI - startI));
+                    var x_a_desenhar = (i - startI) * canvas_width / (endI - startI);
+                    var x2_a_desenhar = (i + jump - startI) * canvas_width / (endI - startI);
 
                     // find intersection f1 and f2
                     if (searching_below == null)

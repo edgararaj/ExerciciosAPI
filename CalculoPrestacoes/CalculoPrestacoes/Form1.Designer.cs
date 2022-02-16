@@ -257,12 +257,13 @@
             // 
             // nud_div
             // 
+            this.nud_div.DecimalPlaces = 2;
             this.nud_div.Location = new System.Drawing.Point(1111, 484);
             this.nud_div.Name = "nud_div";
             this.nud_div.Size = new System.Drawing.Size(76, 26);
             this.nud_div.TabIndex = 10;
             this.nud_div.Value = new decimal(new int[] {
-            5,
+            1,
             0,
             0,
             0});

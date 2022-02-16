@@ -38,19 +38,34 @@ namespace CalculoPrestacoes
             InitializeGraphicComboBoxes();
             pb_grafico.MouseWheel += (sender, e) =>
             {
+                float delta_scale_x = 0;
+                float delta_scale_y = 0;
                 if ((Control.ModifierKeys & Keys.Shift) == Keys.Shift)
                 {
-                    grafico_scale.Y += e.Delta * 1e-3f * grafico_scale.Y;
+                    delta_scale_y = e.Delta * 1e-3f * grafico_scale.Y;
                 }
                 else if ((Control.ModifierKeys & Keys.Alt) == Keys.Alt)
                 { 
-                    grafico_scale.X += e.Delta * 1e-3f * grafico_scale.X;
-                    grafico_scale.Y += e.Delta * 1e-3f * grafico_scale.Y;
+                    delta_scale_x = e.Delta * 1e-3f * grafico_scale.X;
+                    delta_scale_y = e.Delta * 1e-3f * grafico_scale.Y;
                 }
                 else
                 {
-                    grafico_scale.X += e.Delta * 1e-3f * grafico_scale.X;
+                    delta_scale_x = e.Delta * 1e-3f * grafico_scale.X;
                 }
+
+                var new_scale_x = grafico_scale.X + delta_scale_x;
+                var pixels_in_new_scale_x = (e.X - grafico_center.X) * grafico_scale.X / new_scale_x;
+                var pixels_in_scale_x = (e.X - grafico_center.X);
+                grafico_center.X += (int)(pixels_in_scale_x - pixels_in_new_scale_x);
+
+                var new_scale_y = grafico_scale.Y + delta_scale_y;
+                var pixels_in_new_scale_y = (e.Y - grafico_center.Y) * grafico_scale.Y / new_scale_y;
+                var pixels_in_scale_y = (e.Y - grafico_center.Y);
+                grafico_center.Y += (int)(pixels_in_scale_y - pixels_in_new_scale_y);
+
+                grafico_scale.X = new_scale_x;
+                grafico_scale.Y = new_scale_y;
 
                 DesenharGrafico();
             };
@@ -161,7 +176,7 @@ namespace CalculoPrestacoes
 
         private void DesenharGrafico()
         { 
-            calculadora.DesenharGrafico(pb_grafico, grafico_scale, grafico_center, VariavelGraficoX(), VariavelGraficoY(), (int)nud_div.Value);
+            calculadora.DesenharGrafico(pb_grafico, grafico_scale, grafico_center, VariavelGraficoX(), VariavelGraficoY(), (double)nud_div.Value);
         }
 
         private void btn_calcular_Click(object sender, EventArgs e)
