@@ -2,6 +2,7 @@
 Tornando os exercícios de API mais úteis desde 2021
 
 ## Screenshots
+![CalculadoraPrestações](calculadora_prestacoes.png)
 ![CalculadoraIMC](calculadora_imc.png)
 ![EndesaStyle](endesa_style.png)
 ![EqSegundoGrau](eq_segundo_grau.png)

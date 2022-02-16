@@ -17,19 +17,14 @@ namespace CalculoPrestacoes
 
         private Variavel em_ordem;
         private double p, t, v, n;
-        public double precision;
-        public int min, max;
 
-        public Calculadora(double p, double t, double v, double n, Variavel em_ordem, double precision, int min, int max)
+        public Calculadora(double p, double t, double v, double n, Variavel em_ordem)
         {
             this.p = p;
             this.t = t;
             this.v = v;
             this.n = n;
             this.em_ordem = em_ordem;
-            this.precision = precision;
-            this.min = min;
-            this.max = max;
         }
 
         private bool IsSafe(double y)
@@ -53,41 +48,14 @@ namespace CalculoPrestacoes
                 case Calculadora.Variavel.T:
                     {
                         bool? searching_below = null;
-                        for (double x = min; x < max; x++)
+                        var function_window = (Math.Abs(function_min) + Math.Abs(function_max));
+                        var function_cache_size = function_window * function_precision;
+                        for (int i = 0; i < function_cache_size; i++)
                         {
-                            var calculadora = new Calculadora(p, x * precision, v, n, Variavel.P, precision, min, max);
+                            var x = (i / (double)function_precision + function_min);
+                            var calculadora = new Calculadora(p, x, v, n, Variavel.P);
                             var y = calculadora.Calcular();
-                            if (IsSafe(y))
-                            {
-                                // find intersection f1 and f2
-                                if (searching_below == null)
-                                {
-                                    searching_below = y < p;
-                                }
-                                else
-                                {
-                                    if (y > p && searching_below.Value)
-                                    {
-                                        resultado = x * precision;
-                                        searching_below = !searching_below;
-                                    }
-                                    if (y < p && !searching_below.Value)
-                                    {
-                                        resultado = x * precision;
-                                        searching_below = !searching_below;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    break;
-                case Calculadora.Variavel.N:
-                    { 
-                        bool? searching_below = null;
-                        for (double x = min; x < max; x++)
-                        {
-                            var calculadora = new Calculadora(p, t, v, x * precision, Variavel.P, precision, min, max);
-                            var y = calculadora.Calcular();
+
                             if (IsSafe(y))
                             {
                                 // find intersection f1 and f2
@@ -99,7 +67,37 @@ namespace CalculoPrestacoes
                                 {
                                     if (y > p && searching_below.Value || y < p && !searching_below.Value)
                                     {
-                                        resultado = x * precision;
+                                        resultado = x;
+                                        searching_below = !searching_below;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case Calculadora.Variavel.N:
+                    { 
+                        bool? searching_below = null;
+                        var function_window = (Math.Abs(function_min) + Math.Abs(function_max));
+                        var function_cache_size = function_window * function_precision;
+                        for (int i = 0; i < function_cache_size; i++)
+                        {
+                            var x = (i / (double)function_precision + function_min);
+                            var calculadora = new Calculadora(p, t, v, x, Variavel.P);
+                            var y = calculadora.Calcular();
+
+                            if (IsSafe(y))
+                            {
+                                // find intersection f1 and f2
+                                if (searching_below == null)
+                                {
+                                    searching_below = y < p;
+                                }
+                                else
+                                {
+                                    if (y > p && searching_below.Value || y < p && !searching_below.Value)
+                                    {
+                                        resultado = x;
                                         searching_below = !searching_below;
                                     }
                                 }
@@ -111,6 +109,11 @@ namespace CalculoPrestacoes
             return resultado;
         }
 
+        private int function_min = -1000;
+        private int function_max = 1000;
+        private int function_precision = 50;
+        public double[] function_cache;
+
         public void DesenharGrafico(PictureBox pictureBox1, PointF scale, Point center, Variavel x_target, Variavel y_target, int div)
         {
             Func<double, double> funcao = (x) =>
@@ -119,16 +122,16 @@ namespace CalculoPrestacoes
                 switch (x_target)
                 {
                     case Variavel.P:
-                        calculadora = new Calculadora(x, t, v, n, y_target, precision, min, max);
+                        calculadora = new Calculadora(x, t, v, n, y_target);
                         break;
                     case Variavel.T:
-                        calculadora = new Calculadora(p, x, v, n, y_target, precision, min, max);
+                        calculadora = new Calculadora(p, x, v, n, y_target);
                         break;
                     case Variavel.V:
-                        calculadora = new Calculadora(p, t, x, n, y_target, precision, min, max);
+                        calculadora = new Calculadora(p, t, x, n, y_target);
                         break;
                     case Variavel.N:
-                        calculadora = new Calculadora(p, t, v, x, y_target, precision, min, max);
+                        calculadora = new Calculadora(p, t, v, x, y_target);
                         break;
                 }
 
@@ -136,7 +139,7 @@ namespace CalculoPrestacoes
                 return calculadora.Calcular();
             };
 
-            Func<double, double> funcao2 = (x) =>
+            Func<double> funcao2 = () =>
             {
                 switch (y_target)
                 {
@@ -158,120 +161,104 @@ namespace CalculoPrestacoes
             var sub_ref_brush = new SolidBrush(Color.Gray);
             var imagem = new Bitmap(canvas_width, canvas_height);
             var canvas = Graphics.FromImage(imagem);
+            var antialias_canvas = Graphics.FromImage(imagem);
+            antialias_canvas.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            var text_canvas = Graphics.FromImage(imagem);
+            text_canvas.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
             var thickness = 2;
-
-            var x_ref = center.X;
-            var y_ref = center.Y;
 
             // Desenhar divs
             if (div > 0)
             {
-                for (int i = 0; i < (canvas_height - y_ref) * scale.Y / div; i++)
+                var scale_y_font_size = Math.Min(2 / scale.Y, 12);
+                for (int i = 1; i < (canvas_height - center.Y) * scale.Y / div; i++)
                 {
                     var y = div / scale.Y * i;
-                    canvas.FillRectangle(sub_ref_brush, 0, y + y_ref, canvas_width, 1);
+                    canvas.FillRectangle(sub_ref_brush, 0, y + center.Y, canvas_width, 1);
+                    text_canvas.DrawString($"{i * div}", new Font("Arial", scale_y_font_size), ref_brush, center.X, y + center.Y);
                 }
-                for (int i = 0; i < y_ref * scale.Y / div; i++)
+                for (int i = 1; i < center.Y * scale.Y / div; i++)
                 {
                     var y = div / scale.Y * i;
-                    canvas.FillRectangle(sub_ref_brush, 0, y_ref - y, canvas_width, 1);
+                    canvas.FillRectangle(sub_ref_brush, 0, center.Y - y, canvas_width, 1);
+                    text_canvas.DrawString($"{i * div}", new Font("Arial", scale_y_font_size), ref_brush, center.X, center.Y - y);
                 }
 
-                for (int i = 0; i < (canvas_width - x_ref) * scale.X / div; i++)
+                var scale_x_font_size = Math.Min(2 / scale.X, 12);
+                for (int i = 0; i < (canvas_width - center.X) * scale.X / div; i++)
                 {
                     var x = div / scale.X * i;
-                    canvas.FillRectangle(sub_ref_brush, x + x_ref, 0, 1, canvas_height);
+                    canvas.FillRectangle(sub_ref_brush, x + center.X, 0, 1, canvas_height);
+                    text_canvas.DrawString($"{i * div}", new Font("Arial", scale_x_font_size), ref_brush, x + center.X, center.Y);
                 }
-                for (int i = 0; i < x_ref * scale.X / div; i++)
+                for (int i = 1; i < center.X * scale.X / div; i++)
                 {
                     var x = div / scale.X * i;
-                    canvas.FillRectangle(sub_ref_brush, x_ref - x, 0, 1, canvas_height);
+                    canvas.FillRectangle(sub_ref_brush, center.X - x, 0, 1, canvas_height);
+                    text_canvas.DrawString($"{i * div}", new Font("Arial", scale_x_font_size), ref_brush, center.X - x, center.Y);
                 }
             }
 
-            canvas.FillRectangle(ref_brush, 0, y_ref, canvas_width, thickness);
-            canvas.FillRectangle(ref_brush, x_ref, 0, thickness, canvas_height);
+            canvas.FillRectangle(ref_brush, 0, center.Y, canvas_width, thickness);
+            canvas.FillRectangle(ref_brush, center.X, 0, thickness, canvas_height);
 
-            var fun_brush = new SolidBrush(Color.Red);
-            var fun2_brush = new SolidBrush(Color.Green);
-            int? x_eq = null;
-            bool? searching_below = null;
-            double? prev_y = null;
-            for (int x_a_desenhar = -1; x_a_desenhar < canvas_width; x_a_desenhar++)
+            var function_window = (Math.Abs(function_min) + Math.Abs(function_max));
+            var function_cache_size = function_window * function_precision;
+            if (function_cache == null)
             {
-                var x = (x_a_desenhar - x_ref) * scale.X;
-                // Funcao 1
+                function_cache = new double[function_cache_size];
+                for (int i = 0; i < function_cache_size; i++)
                 {
-                    var y = funcao(x);
+                    var x = (i / (double)function_precision + function_min);
+                    function_cache[i] = funcao(x);
+                }
+            }
 
-                    if (!IsSafe(y))
-                    { 
-                        prev_y = null;
+            var fun_pen = new Pen(Color.Red, thickness);
+
+            var startI = Math.Max((int)((-function_min - (center.X * scale.X)) * function_precision), 0);
+            var endI = Math.Min((int)((-function_min + ((canvas_width - center.X) * scale.X)) * function_precision), function_cache_size - 1);
+            bool? searching_below = null;
+            int? x_eq = null;
+            for (int i = startI; i < endI; i++)
+            {
+                var y = function_cache[i];
+                var y2 = function_cache[i+1];
+                if (IsSafe(y) && IsSafe(y2)) 
+                {
+                    var x_a_desenhar = (int)((i - startI) * canvas_width / (endI - startI));
+                    var x2_a_desenhar = (int)((i + 1 - startI) * canvas_width / (endI - startI));
+
+                    // find intersection f1 and f2
+                    if (searching_below == null)
+                    {
+                        searching_below = y < funcao2();
                     }
                     else
                     {
-                        // find intersection f1 and f2
-                        if (searching_below == null)
+                        if (y > funcao2() && searching_below.Value || y < funcao2() && !searching_below.Value)
                         {
-                            searching_below = y < funcao2(x);
+                            x_eq = x_a_desenhar;
+                            searching_below = !searching_below;
                         }
-                        else
-                        {
-                            if (y > funcao2(x) && searching_below.Value || y < funcao2(x) && !searching_below.Value)
-                            {
-                                x_eq = x_a_desenhar;
-                                searching_below = !searching_below;
-                            }
-                        }
+                    }
 
-                        if (prev_y != null)
-                        {
-                            var y_a_desenhar = (int)(y_ref - y / scale.Y);
-                            var prev_y_a_desenhar = (int)(y_ref - prev_y / scale.Y);
-
-                            int? top = null;
-                            int? height = null;
-                            if (prev_y_a_desenhar < y_a_desenhar && y_a_desenhar > 0)
-                            {
-                                top = prev_y_a_desenhar;
-                                height = Math.Max(y_a_desenhar - prev_y_a_desenhar, thickness);
-                            }
-                            else if (y_a_desenhar < prev_y_a_desenhar && prev_y_a_desenhar > -thickness)
-                            {
-                                height = Math.Max(prev_y_a_desenhar - y_a_desenhar, thickness);
-                                top = prev_y_a_desenhar - height + thickness;
-                            }
-                            else if (y_a_desenhar == prev_y_a_desenhar && prev_y_a_desenhar < canvas_height)
-                            {
-                                top = prev_y_a_desenhar;
-                                height = thickness;
-                            }
-
-                            if (height != null && (top > 0 || top + height.Value < canvas_height))
-                                canvas.FillRectangle(fun_brush, x_a_desenhar, top.Value, thickness, height.Value);
-                        }
-
-                        prev_y = y;
+                    var y_a_desenhar = (int)(center.Y - y / scale.Y);
+                    var y2_a_desenhar = (int)(center.Y - y2 / scale.Y);
+                    if (y_a_desenhar > 0 && y_a_desenhar < canvas_height || y2_a_desenhar > 0 && y2_a_desenhar < canvas_height)
+                    {
+                        antialias_canvas.DrawLine(fun_pen, x_a_desenhar, y_a_desenhar, x2_a_desenhar, y2_a_desenhar);
                     }
                 }
-
-                // Funcao 2
-                {
-                    var y = funcao2(x);
-                    var y_a_desenhar = (y_ref - y / scale.Y);
-                    if (y_a_desenhar >= 0 && y_a_desenhar < canvas_height)
-                        canvas.FillRectangle(fun2_brush, x_a_desenhar, (int)y_a_desenhar, thickness, thickness);
-                }
             }
-            fun_brush.Dispose();
-            fun2_brush.Dispose();
+
+            // Funcao 2
+            canvas.FillRectangle(Brushes.Green, 0, center.Y - (int)funcao2() / scale.Y, canvas_width, thickness);
 
             if (x_eq != null)
-            {
-                var eq_brush = new SolidBrush(Color.BlueViolet);
-                canvas.FillRectangle(eq_brush, x_eq.Value, 0, thickness, canvas_height);
-                eq_brush.Dispose();
-            }
+                canvas.FillRectangle(Brushes.BlueViolet, x_eq.Value, 0, thickness, canvas_height);
+
+            fun_pen.Dispose();
 
             canvas.Dispose();
             ref_brush.Dispose();
@@ -280,3 +267,82 @@ namespace CalculoPrestacoes
         }
     }
 }
+
+            /*
+                int? x_eq = null;
+                bool? searching_below = null;
+                double? prev_y = null;
+                for (int x_a_desenhar = -1; x_a_desenhar < canvas_width; x_a_desenhar++)
+                {
+                    var x = (x_a_desenhar - x_ref) * scale.X;
+                    // Funcao 1
+                    {
+                        var y = funcao(x);
+
+                        if (!IsSafe(y))
+                        { 
+                            prev_y = null;
+                        }
+                        else
+                        {
+                            // find intersection f1 and f2
+                            if (searching_below == null)
+                            {
+                                searching_below = y < funcao2(x);
+                            }
+                            else
+                            {
+                                if (y > funcao2(x) && searching_below.Value || y < funcao2(x) && !searching_below.Value)
+                                {
+                                    x_eq = x_a_desenhar;
+                                    searching_below = !searching_below;
+                                }
+                            }
+
+                            if (prev_y != null)
+                            {
+                                var y_a_desenhar = (int)(y_ref - y / scale.Y);
+                                var prev_y_a_desenhar = (int)(y_ref - prev_y / scale.Y);
+
+                                int? top = null;
+                                int? height = null;
+                                if (prev_y_a_desenhar < y_a_desenhar && y_a_desenhar > 0)
+                                {
+                                    top = prev_y_a_desenhar;
+                                    height = Math.Max(y_a_desenhar - prev_y_a_desenhar, thickness);
+                                }
+                                else if (y_a_desenhar < prev_y_a_desenhar && prev_y_a_desenhar > -thickness)
+                                {
+                                    height = Math.Max(prev_y_a_desenhar - y_a_desenhar, thickness);
+                                    top = prev_y_a_desenhar - height + thickness;
+                                }
+                                else if (y_a_desenhar == prev_y_a_desenhar && prev_y_a_desenhar < canvas_height)
+                                {
+                                    top = prev_y_a_desenhar;
+                                    height = thickness;
+                                }
+
+                                if (height != null && (top > 0 || top + height.Value < canvas_height))
+                                    canvas.FillRectangle(fun_brush, x_a_desenhar, top.Value, thickness, height.Value);
+                            }
+
+                            prev_y = y;
+                        }
+                    }
+
+                    // Funcao 2
+                    {
+                        var y = funcao2(x);
+                        var y_a_desenhar = (y_ref - y / scale.Y);
+                        if (y_a_desenhar >= 0 && y_a_desenhar < canvas_height)
+                            canvas.FillRectangle(fun2_brush, x_a_desenhar, (int)y_a_desenhar, thickness, thickness);
+                    }
+                }
+
+                if (x_eq != null)
+                {
+                    var eq_brush = new SolidBrush(Color.BlueViolet);
+                    canvas.FillRectangle(eq_brush, x_eq.Value, 0, thickness, canvas_height);
+                    eq_brush.Dispose();
+                }
+            */

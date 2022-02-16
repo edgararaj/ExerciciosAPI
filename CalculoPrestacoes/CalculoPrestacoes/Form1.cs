@@ -52,10 +52,6 @@ namespace CalculoPrestacoes
                     grafico_scale.X += e.Delta * 1e-3f * grafico_scale.X;
                 }
 
-                calculadora.min = (int)(-grafico_center.X * grafico_scale.X);
-                calculadora.max = (int)((pb_grafico.Width - grafico_center.X) * grafico_scale.X);
-                txt_a_calcular.Text = calculadora.Calcular().ToString();
-
                 DesenharGrafico();
             };
         }
@@ -136,9 +132,7 @@ namespace CalculoPrestacoes
             if (parcelas_invalidas == 1 || parcelas_invalidas == 0 && txt_a_calcular != null) {
                 txt_a_calcular_prev_back_color = txt_a_calcular.BackColor;
                 txt_a_calcular.BackColor = Color.LightGreen;
-                var min = -grafico_center.X * grafico_scale.X;
-                var max = (pb_grafico.Width - grafico_center.X) * grafico_scale.X;
-                calculadora = new Calculadora(p, t, v, n, txts[txt_a_calcular], grafico_scale.X, (int)min, (int)max);
+                calculadora = new Calculadora(p, t, v, n, txts[txt_a_calcular]);
                 return true;
             }
 
@@ -175,6 +169,7 @@ namespace CalculoPrestacoes
             if (!ConstruirCalculadora()) return;
             txt_a_calcular.Text = calculadora.Calcular().ToString();
 
+            calculadora.function_cache = null;
             DesenharGrafico();
 
             pb_grafico.Visible = true;
@@ -207,10 +202,6 @@ namespace CalculoPrestacoes
             {
                 grafico_center.X = e.X - grafico_mouse_start.X + grafico_mouse_start_center.X;
                 grafico_center.Y = e.Y - grafico_mouse_start.Y + grafico_mouse_start_center.Y;
-
-                calculadora.min = (int)(-grafico_center.X * grafico_scale.X);
-                calculadora.max = (int)((pb_grafico.Width - grafico_center.X) * grafico_scale.X);
-                txt_a_calcular.Text = calculadora.Calcular().ToString();
 
                 DesenharGrafico();
             }
@@ -266,6 +257,7 @@ namespace CalculoPrestacoes
             }
             cb_y.SelectedIndexChanged += cb_y_SelectedIndexChanged;
 
+            calculadora.function_cache = null;
             DesenharGrafico();
         }
 
@@ -298,6 +290,7 @@ namespace CalculoPrestacoes
             }
             cb_x.SelectedIndexChanged += cb_x_SelectedIndexChanged;
 
+            calculadora.function_cache = null;
             DesenharGrafico();
         }
 
